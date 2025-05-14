@@ -1,0 +1,5 @@
+gradio>=5.22.0
+tavily-python>=0.7.2
+openai>=1.68.2
+openai-agents>=0.0.6
+sendgrid>=6.11.0
