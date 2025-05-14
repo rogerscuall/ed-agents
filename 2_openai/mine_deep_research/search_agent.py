@@ -2,6 +2,7 @@ from agents import Agent, WebSearchTool, ModelSettings, function_tool
 from tavily import TavilyClient
 from dotenv import load_dotenv
 import os
+from model import gemini_model
 
 INSTRUCTIONS = (
     "You are a research assistant. Given a search term, you search the web for that term and "
@@ -31,6 +32,6 @@ search_agent = Agent(
     instructions=INSTRUCTIONS,
     # tools=[WebSearchTool(search_context_size="low")],
     tools=[search_web],
-    model="gpt-4o-mini",
+    model=gemini_model,
     model_settings=ModelSettings(tool_choice="required"),
 )

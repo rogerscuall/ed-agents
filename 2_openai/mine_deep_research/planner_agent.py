@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from agents import Agent
+from model import gemini_model
 
 HOW_MANY_SEARCHES = 5
 
@@ -23,6 +24,6 @@ class WebSearchPlan(BaseModel):
 planner_agent = Agent(
     name="PlannerAgent",
     instructions=INSTRUCTIONS,
-    model="gpt-4o-mini",
+    model=gemini_model,
     output_type=WebSearchPlan,
 )

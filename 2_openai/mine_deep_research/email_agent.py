@@ -1,5 +1,6 @@
 import os
 from typing import Dict
+from model import gemini_model
 
 import sendgrid
 from sendgrid.helpers.mail import Email, Mail, Content, To
@@ -25,5 +26,5 @@ email_agent = Agent(
     name="Email agent",
     instructions=INSTRUCTIONS,
     tools=[send_email],
-    model="gpt-4o-mini",
+    model=gemini_model,
 )

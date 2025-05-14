@@ -1,5 +1,8 @@
 from pydantic import BaseModel
 from agents import Agent
+from agents import function_tool
+from model import gemini_model
+
 
 INSTRUCTIONS = (
     "You are a senior researcher tasked with writing a cohesive report for a research query. "
@@ -25,6 +28,6 @@ class ReportData(BaseModel):
 writer_agent = Agent(
     name="WriterAgent",
     instructions=INSTRUCTIONS,
-    model="gpt-4o-mini",
+    model=gemini_model,
     output_type=ReportData,
 )
