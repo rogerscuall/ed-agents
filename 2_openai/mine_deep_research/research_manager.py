@@ -1,4 +1,4 @@
-from agents import Runner, trace, gen_trace_id
+from agents import Runner, trace, gen_trace_id, Agent
 from search_agent import search_agent
 from planner_agent import planner_agent, WebSearchItem, WebSearchPlan
 from writer_agent import writer_agent, ReportData
@@ -6,6 +6,7 @@ from email_agent import email_agent
 import asyncio
 
 class ResearchManager:
+
 
     async def run(self, query: str):
         """ Run the deep research process, yielding the status updates and the final report"""
@@ -82,3 +83,26 @@ class ResearchManager:
         )
         print("Email sent")
         return report
+
+# Define the ResearchManager as a meta-agent using other agents as tools
+RESEARCH_MANAGER_INSTRUCTIONS = """
+You are a Research Manager. When given a research query, you have access to four tools:
+1) planner ➜ returns a WebSearchPlan
+2) search  ➜ returns raw search results for each WebSearchItem
+3) writer  ➜ turns the query & summarized search results into a markdown report
+4) email   ➜ sends the markdown report
+
+Execute these steps in order and return the final markdown report as your output.
+"""
+research_manager_agent = Agent(
+    name="ResearchManagerAgent",
+    instructions=RESEARCH_MANAGER_INSTRUCTIONS,
+    model="gpt-4o-mini",
+    tools={
+        "planner": planner_agent,
+        "search": search_agent,
+        "writer": writer_agent,
+        "email": email_agent,
+    },
+    output_type=ReportData,
+)
