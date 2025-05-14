@@ -1,30 +1,73 @@
-from agents import Runner, trace, gen_trace_id, Agent
+from agents import Runner, trace, gen_trace_id, Agent, ItemHelpers
 from search_agent import search_agent
 from planner_agent import planner_agent, WebSearchItem, WebSearchPlan
 from writer_agent import writer_agent, ReportData
 from email_agent import email_agent
+from openai.types.responses import ResponseTextDeltaEvent
 import asyncio
 
 class ResearchManager:
-
+    def __init__(self):
+        tools = [
+            planner_agent.as_tool(tool_name="plan_searches", tool_description="Plan a set of web searches to perform"),
+            search_agent.as_tool(tool_name="search", tool_description="Search the web for information"),
+            writer_agent.as_tool(tool_name="write_report", tool_description="Write a detailed report based on the search results"),
+            email_agent.as_tool(tool_name="send_email", tool_description="Send an email with the report"),
+        ]   
+        self.agent = Agent(
+            name="ResearchManagerAgent",
+            instructions=RESEARCH_MANAGER_INSTRUCTIONS,
+            model="gpt-4o-mini",
+            tools=tools,
+            output_type=ReportData,
+        )
 
     async def run(self, query: str):
         """ Run the deep research process, yielding the status updates and the final report"""
         trace_id = gen_trace_id()
         with trace("Research trace", trace_id=trace_id):
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
+            # yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
+            print("Starting research...")
+            result = await Runner.run(
+                self.agent,
+                f"Query: {query}",
+            )
+            return result.final_output_as(ReportData)
+    async def run1(self, query: str):
+        """ Run the deep research process, yielding the status updates and the final report"""
+        trace_id = gen_trace_id()
+        with trace("Research trace", trace_id=trace_id):
+            print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
             yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
             print("Starting research...")
-            search_plan = await self.plan_searches(query)
-            yield "Searches planned, starting to search..."     
-            search_results = await self.perform_searches(search_plan)
             yield "Searches complete, writing report..."
-            report = await self.write_report(query, search_results)
-            yield "Report written, sending email..."
-            await self.send_email(report)
-            yield "Email sent, research complete"
-            yield report.markdown_report
-        
+            result = Runner.run_streamed(
+                self.agent,
+                f"Query: {query}",
+            )
+            async for event in result.stream_events():
+                # We'll ignore the raw responses event deltas
+                if event.type == "raw_response_event":
+                    continue
+                # When the agent updates, print that
+                elif event.type == "agent_updated_stream_event":
+                    yield f"Agent updated: {event.new_agent.name}"
+                    continue
+                # When items are generated, print them
+                elif event.type == "run_item_stream_event":
+                    if event.item.type == "tool_call_item":
+                        yield "-- Tool was called"
+                    elif event.item.type == "tool_call_output_item":
+                        yield f"-- Tool output: {event.item.output}"
+                    elif event.item.type == "message_output_item":
+                        yield f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}"
+                        output = ItemHelpers.text_message_output(event.item)
+                        parse_output = ReportData.model_validate_json(output)
+                        yield f"Final output: {parse_output.markdown_report}"
+                    else:
+                        pass  # Ignore other event types
+
 
     async def plan_searches(self, query: str) -> WebSearchPlan:
         """ Plan the searches to perform for the query """
