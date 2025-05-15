@@ -12,7 +12,7 @@ async def main(query: str):
         print(chunk)
 
 if __name__ == "__main__":
-    asyncio.run(main("Latest latest updates of the IRS 2024 tax code changes"))
+    asyncio.run(main("What is the latest news about AI?"))
 
 # async def run(query: str):    
 #     async for chunk in Runner.stream(research_manager_agent, query):
