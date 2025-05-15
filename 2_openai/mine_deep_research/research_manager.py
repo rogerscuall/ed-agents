@@ -1,7 +1,5 @@
 from agents import Runner, trace, gen_trace_id, Agent, ItemHelpers
 from agents.model_settings import ModelSettings
-from search_agent import search_agent
-from planner_agent import planner_agent, WebSearchItem, WebSearchPlan
 from writer_agent import writer_agent, ReportData
 from web_search_agent import web_search_agent
 from email_agent import email_agent
@@ -116,86 +114,4 @@ class ResearchManager:
                         parse_output = ReportData.model_validate_json(output)
                         yield f"Final output: {parse_output.markdown_report}"
                     else:
-                        pass  # Ignore other event types
-
-
-#     async def plan_searches(self, query: str) -> WebSearchPlan:
-#         """ Plan the searches to perform for the query """
-#         print("Planning searches...")
-#         result = await Runner.run(
-#             planner_agent,
-#             f"Query: {query}",
-#         )
-#         print(f"Will perform {len(result.final_output.searches)} searches")
-#         return result.final_output_as(WebSearchPlan)
-
-#     async def perform_searches(self, search_plan: WebSearchPlan) -> list[str]:
-#         """ Perform the searches to perform for the query """
-#         print("Searching...")
-#         num_completed = 0
-#         tasks = [asyncio.create_task(self.search(item)) for item in search_plan.searches]
-#         results = []
-#         for task in asyncio.as_completed(tasks):
-#             result = await task
-#             if result is not None:
-#                 results.append(result)
-#             num_completed += 1
-#             print(f"Searching... {num_completed}/{len(tasks)} completed")
-#         print("Finished searching")
-#         return results
-
-#     async def search(self, item: WebSearchItem) -> str | None:
-#         """ Perform a search for the query """
-#         input = f"Search term: {item.query}\nReason for searching: {item.reason}"
-#         try:
-#             result = await Runner.run(
-#                 search_agent,
-#                 input,
-#             )
-#             return str(result.final_output)
-#         except Exception:
-#             return None
-
-#     async def write_report(self, query: str, search_results: list[str]) -> ReportData:
-#         """ Write the report for the query """
-#         print("Thinking about report...")
-#         input = f"Original query: {query}\nSummarized search results: {search_results}"
-#         result = await Runner.run(
-#             writer_agent,
-#             input,
-#         )
-
-#         print("Finished writing report")
-#         return result.final_output_as(ReportData)
-    
-#     async def send_email(self, report: ReportData) -> None:
-#         print("Writing email...")
-#         result = await Runner.run(
-#             email_agent,
-#             report.markdown_report,
-#         )
-#         print("Email sent")
-#         return report
-
-# # Define the ResearchManager as a meta-agent using other agents as tools
-# RESEARCH_MANAGER_INSTRUCTIONS = """
-# You are a Research Manager. When given a research query, you have access to four tools:
-# 1) planner ➜ returns a WebSearchPlan
-# 2) search  ➜ returns raw search results for each WebSearchItem
-# 3) writer  ➜ turns the query & summarized search results into a markdown report
-# 4) email   ➜ sends the markdown report
-
-# Execute these steps in order and return the final markdown report as your output.
-# """
-# research_manager_agent = Agent(
-#     name="ResearchManagerAgent",
-#     instructions=RESEARCH_MANAGER_INSTRUCTIONS,
-#     model="gpt-4o-mini",
-#     tools={
-#         "planner": planner_agent,
-#         "search": web_search_agent,
-#         "writer": write_reportr_agent,
-#         "email": email_agent,
-#     },
-#     output_type=ReportData,
-# )
+                        pass
