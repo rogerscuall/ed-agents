@@ -47,21 +47,24 @@ class ResearchManager:
                 f"Query: {query}",
             )
             async for event in result.stream_events():
-                # We'll ignore the raw responses event deltas
                 if event.type == "raw_response_event":
                     continue
-                # When the agent updates, print that
                 elif event.type == "agent_updated_stream_event":
-                    yield f"Agent updated: {event.new_agent.name}"
                     continue
                 # When items are generated, print them
                 elif event.type == "run_item_stream_event":
                     if event.item.type == "tool_call_item":
-                        yield "-- Tool was called"
+                        function_name = event.item.raw_item.name
+                        if function_name == "plan_searches":
+                            yield f"Planning searches..."
+                        elif function_name == "search":
+                            yield f"Searching for information..."
+                        elif function_name == "write_report":
+                            yield f"Writing report..."
                     elif event.item.type == "tool_call_output_item":
-                        yield f"-- Tool output: {event.item.output}"
+                        continue
+                        # print(f"Tool call output: {event.item.output}")
                     elif event.item.type == "message_output_item":
-                        yield f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}"
                         output = ItemHelpers.text_message_output(event.item)
                         parse_output = ReportData.model_validate_json(output)
                         yield f"Final output: {parse_output.markdown_report}"
