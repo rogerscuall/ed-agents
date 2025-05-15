@@ -6,12 +6,9 @@ import asyncio
 
 load_dotenv(override=True)
 final_agent = ResearchManager()
-# message = "Latest latest updates of the IRS 2024 tax code changes"
-# output = asyncio.run(final_agent.run(message))
-# print(output.markdown_report)
 
 async def main(query: str):
-    async for chunk in final_agent.run1(query):
+    async for chunk in final_agent.run(query):
         print(chunk)
 
 if __name__ == "__main__":
