@@ -84,7 +84,7 @@ class ResearchManager:
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
             yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
             print("Starting research...")
-            yield "Searches complete, writing report..."
+            yield "Starting research..."
             result = Runner.run_streamed(
                 self.agent,
                 f"Query: {query}",
