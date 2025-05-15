@@ -88,14 +88,13 @@ class ResearchManager:
             result = Runner.run_streamed(
                 self.agent,
                 f"Query: {query}",
-                max_turns = 20,
+                max_turns = 40,
             )
             async for event in result.stream_events():
                 if event.type == "raw_response_event":
                     continue
                 elif event.type == "agent_updated_stream_event":
                     continue
-                # When items are generated, print them
                 elif event.type == "run_item_stream_event":
                     if event.item.type == "tool_call_item":
                         # print(f"Tool call: {event.item}")
