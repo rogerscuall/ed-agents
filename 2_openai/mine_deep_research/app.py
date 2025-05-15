@@ -15,7 +15,7 @@ if __name__ == "__main__":
     asyncio.run(main("What is the latest news about AI?"))
 
 # async def run(query: str):    
-#     async for chunk in Runner.stream(research_manager_agent, query):
+#     async for chunk in final_agent.run(query):
 #         yield chunk
 
 
