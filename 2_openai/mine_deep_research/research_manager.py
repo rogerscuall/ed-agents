@@ -27,18 +27,6 @@ class ResearchManager:
         trace_id = gen_trace_id()
         with trace("Research trace", trace_id=trace_id):
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
-            # yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
-            print("Starting research...")
-            result = await Runner.run(
-                self.agent,
-                f"Query: {query}",
-            )
-            return result.final_output_as(ReportData)
-    async def run1(self, query: str):
-        """ Run the deep research process, yielding the status updates and the final report"""
-        trace_id = gen_trace_id()
-        with trace("Research trace", trace_id=trace_id):
-            print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
             yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
             print("Starting research...")
             yield "Searches complete, writing report..."
@@ -54,6 +42,7 @@ class ResearchManager:
                 # When items are generated, print them
                 elif event.type == "run_item_stream_event":
                     if event.item.type == "tool_call_item":
+                        # print(f"Tool call: {event.item}")
                         function_name = event.item.raw_item.name
                         if function_name == "plan_searches":
                             yield f"Planning searches..."
@@ -62,8 +51,8 @@ class ResearchManager:
                         elif function_name == "write_report":
                             yield f"Writing report..."
                     elif event.item.type == "tool_call_output_item":
-                        continue
                         # print(f"Tool call output: {event.item.output}")
+                        continue
                     elif event.item.type == "message_output_item":
                         output = ItemHelpers.text_message_output(event.item)
                         parse_output = ReportData.model_validate_json(output)
