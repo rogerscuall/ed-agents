@@ -4,9 +4,10 @@ from model import gemini_model
 from pydantic import BaseModel, Field
 import sendgrid
 from sendgrid.helpers.mail import Email, Mail, Content, To
-from agents import Agent, function_tool, output_guardrail, GuardrailFunctionOutput, RunContextWrapper
+from agents import Agent, function_tool, output_guardrail, GuardrailFunctionOutput, RunContextWrapper, Runner
 from agents.extensions.visualization import draw_graph
 import re
+from textwrap import dedent
 
 class EmailOutput(BaseModel):
     message: str = Field(description="The email message to be sent.")
@@ -16,15 +17,31 @@ class PlaceHolderOutput(BaseModel):
     tripwire_triggered: bool = Field(description="Whether the tripwire was triggered.")
     reasoning: str = Field(description="The reasoning for the tripwire.")
 
+template_placeholder_agent = Agent(
+    name = "Guardrail Place holder agent",
+    instructions=dedent(
+    """
+    Your task is to review the email and verify that there are not placeholders or names.
+    Some examples of placeholders are as follow:
+    - [Your Name]
+    - [Recipient's Name],
+    If you find any place holder please set tripwire_triggered.
+
+    """
+    ),
+    output_type = PlaceHolderOutput
+)
+
 @output_guardrail
 async def template_placeholder_guardrail(
         ctx: RunContextWrapper,
         agent: Agent,
         output: EmailOutput,
     ) -> GuardrailFunctionOutput:
+        result = await Runner.run(template_placeholder_agent, output.response, context=ctx.context)
         return GuardrailFunctionOutput(
-            output_info="text",
-            tripwire_triggered=True,
+            output_info=PlaceHolderOutput.reasoning,
+            tripwire_triggered=PlaceHolderOutput.tripwire_triggered,
         )
 
 @function_tool
