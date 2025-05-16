@@ -20,6 +20,7 @@ from openai.types.responses import ResponseTextDeltaEvent
 from textwrap import dedent
 # from model import gemini_model
 from pydantic import BaseModel
+from handoff_agents import email_handoff_agent
 
 def create_prompts(tools: list):
     """ Create the prompts for the tools """
@@ -63,7 +64,7 @@ def create_prompts(tools: list):
         ---
 
         Here are the rules you should always follow to solve your task:
-        1. Always provide a 'Thought', 'Tool', 'Obersvation'.
+        1. Always provide a 'Thought', 'Tool', 'Observation'.
         2. Once initial thoughs and searches are done, be open to iterate and refine your search using the new information you find.
         3. Identify all the probable search queries that are relavant for the user query.
         4. You have access to the following tools: {tool_descriptions}, always use them to solve the task.
@@ -91,6 +92,7 @@ class ResearchManager:
             model_settings=ModelSettings(tool_choice="required", temperature=0.0),
             input_guardrails=[homework_guardrail],
             output_guardrails=[cyber_agent_output_guardrail],
+            # handoffs=[email_handoff_agent]
         )
 
     async def run(self, query: str):
@@ -157,13 +159,13 @@ class CyberSecurityOutput(BaseModel):
     is_cyber_security_homework: bool
     reasoning: str
 
-cyber_agent_output_guardrail = Agent(
+cyber_agent_output_agent = Agent(
     name="CyberSecurity Guardrail check",
     instructions="Check if the output has cyber security information.",
     output_type=CyberSecurityOutput,
 )
 
 @output_guardrail
-async def cyber_agent_output_guardrail(ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]) -> GuardrailFunctionOutput:
-    result = await Runner.run(cyber_agent_output_guardrail, input, context=ctx.context)
-    return GuardrailFunctionOutput(output_info=result.final_output, tripwire_triggered=result.final_output.is_cyber_security_homework)
+async def cyber_agent_output_guardrail(ctx: RunContextWrapper[None], agent: Agent, output: ReportData) -> GuardrailFunctionOutput:
+    result = await Runner.run(cyber_agent_output_agent, output.markdown_report, context=ctx.context)
+    return GuardrailFunctionOutput(output_info=result.final_output,tripwire_triggered=result.final_output.is_cyber_security_homework,)
