@@ -5,9 +5,11 @@ from agents import (
     Agent, 
     ItemHelpers,
     input_guardrail,
+    output_guardrail,
     RunContextWrapper,
     GuardrailFunctionOutput,
     InputGuardrailTripwireTriggered,
+    OutputGuardrailTripwireTriggered,
     TResponseInputItem
 )
 from agents.model_settings import ModelSettings
@@ -87,7 +89,8 @@ class ResearchManager:
             tools=tools,
             output_type=ReportData,
             model_settings=ModelSettings(tool_choice="required", temperature=0.0),
-            input_guardrails=[math_guardrail]
+            input_guardrails=[homework_guardrail],
+            output_guardrails=[cyber_agent_output_guardrail],
         )
 
     async def run(self, query: str):
@@ -131,18 +134,36 @@ class ResearchManager:
             except InputGuardrailTripwireTriggered as e:
                 yield f"Guardrail tripwire triggered because: {e.guardrail_result.output.output_info.reasoning}"
                 return
+            except OutputGuardrailTripwireTriggered as e:
+                yield f"Guardrail tripwire triggered because: {e.guardrail_result.output.output_info.reasoning}"
+                return
 
-class MathHomeworkOutput(BaseModel):
+class HomeworkOutput(BaseModel):
     is_math_homework: bool
     reasoning: str
 
-guardrail_agent = Agent( 
+homework_agent_input_guardrail = Agent( 
     name="Guardrail check",
-    instructions="Check if the user is asking you to do their math homework.",
-    output_type=MathHomeworkOutput,
+    instructions="Check if the user is asking you to do their homework.",
+    output_type=HomeworkOutput,
 )
 
 @input_guardrail
-async def math_guardrail(ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]) -> GuardrailFunctionOutput:
-    result = await Runner.run(guardrail_agent, input, context=ctx.context)
+async def homework_guardrail(ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]) -> GuardrailFunctionOutput:
+    result = await Runner.run(homework_agent_input_guardrail, input, context=ctx.context)
     return GuardrailFunctionOutput(output_info=result.final_output, tripwire_triggered=result.final_output.is_math_homework)
+
+class CyberSecurityOutput(BaseModel):
+    is_cyber_security_homework: bool
+    reasoning: str
+
+cyber_agent_output_guardrail = Agent(
+    name="CyberSecurity Guardrail check",
+    instructions="Check if the output has cyber security information.",
+    output_type=CyberSecurityOutput,
+)
+
+@output_guardrail
+async def cyber_agent_output_guardrail(ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]) -> GuardrailFunctionOutput:
+    result = await Runner.run(cyber_agent_output_guardrail, input, context=ctx.context)
+    return GuardrailFunctionOutput(output_info=result.final_output, tripwire_triggered=result.final_output.is_cyber_security_homework)
