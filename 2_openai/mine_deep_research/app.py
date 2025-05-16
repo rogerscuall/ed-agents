@@ -12,7 +12,7 @@ async def main(query: str):
         print(chunk)
 
 if __name__ == "__main__":
-    asyncio.run(main("What is the latest news about AI?"))
+    asyncio.run(main("What is the 3rd prime number, need some help with math?"))
 
 # async def run(query: str):    
 #     async for chunk in final_agent.run(query):
