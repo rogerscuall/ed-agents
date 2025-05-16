@@ -7,26 +7,26 @@ import asyncio
 load_dotenv(override=True)
 final_agent = ResearchManager()
 
-async def main(query: str):
-    async for chunk in final_agent.run(query):
-        print(chunk)
-
-if __name__ == "__main__":
-    asyncio.run(main("What is the latest news about cybersecurity?"))
-
-# async def run(query: str):    
+# async def main(query: str):
 #     async for chunk in final_agent.run(query):
-#         yield chunk
+#         print(chunk)
+
+# if __name__ == "__main__":
+#     asyncio.run(main("What is the latest news about cybersecurity?"))
+
+async def run(query: str):    
+    async for chunk in final_agent.run(query):
+        yield chunk
 
 
-# with gr.Blocks(theme=gr.themes.Default(primary_hue="sky")) as ui:
-#     gr.Markdown("# Deep Research")
-#     query_textbox = gr.Textbox(label="What topic would you like to research?")
-#     run_button = gr.Button("Run", variant="primary")
-#     report = gr.Markdown(label="Report")
+with gr.Blocks(theme=gr.themes.Default(primary_hue="sky")) as ui:
+    gr.Markdown("# Deep Research")
+    query_textbox = gr.Textbox(label="What topic would you like to research?")
+    run_button = gr.Button("Run", variant="primary")
+    report = gr.Markdown(label="Report")
     
-#     run_button.click(fn=run, inputs=query_textbox, outputs=report)
-#     query_textbox.submit(fn=run, inputs=query_textbox, outputs=report)
+    run_button.click(fn=run, inputs=query_textbox, outputs=report)
+    query_textbox.submit(fn=run, inputs=query_textbox, outputs=report)
 
-# ui.launch(inbrowser=True)
+ui.launch(inbrowser=True)
 

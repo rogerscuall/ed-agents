@@ -21,6 +21,7 @@ from textwrap import dedent
 # from model import gemini_model
 from pydantic import BaseModel
 from handoff_agents import email_handoff_agent
+from agents.extensions.visualization import draw_graph
 
 def create_prompts(tools: list):
     """ Create the prompts for the tools """
@@ -91,7 +92,7 @@ class ResearchManager:
             output_type=ReportData,
             model_settings=ModelSettings(tool_choice="required", temperature=0.0),
             input_guardrails=[homework_guardrail],
-            output_guardrails=[cyber_agent_output_guardrail],
+            # output_guardrails=[cyber_agent_output_guardrail],
             # handoffs=[email_handoff_agent]
         )
 
@@ -169,3 +170,11 @@ cyber_agent_output_agent = Agent(
 async def cyber_agent_output_guardrail(ctx: RunContextWrapper[None], agent: Agent, output: ReportData) -> GuardrailFunctionOutput:
     result = await Runner.run(cyber_agent_output_agent, output.markdown_report, context=ctx.context)
     return GuardrailFunctionOutput(output_info=result.final_output,tripwire_triggered=result.final_output.is_cyber_security_homework,)
+
+if __name__ == "__main__":
+    draw_graph(ResearchManager().agent, "images/research_manager.png")
+    draw_graph(homework_agent_input_guardrail, "images/homework_guardrail.png")
+    draw_graph(cyber_agent_output_agent, "images/cyber_agent_output_guardrail.png")
+    draw_graph(email_agent, "images/email_agent.png")
+    draw_graph(web_search_agent, "images/web_search_agent.png")
+    draw_graph(writer_agent, "images/writer_agent.png")

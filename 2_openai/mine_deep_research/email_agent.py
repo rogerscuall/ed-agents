@@ -1,10 +1,12 @@
 import os
 from typing import Dict
 from model import gemini_model
-
+from pydantic import BaseModel, Field
 import sendgrid
 from sendgrid.helpers.mail import Email, Mail, Content, To
 from agents import Agent, function_tool
+from agents.extensions.visualization import draw_graph
+from input_guardrails import template_placeholder_agent
 
 @function_tool
 def send_email(subject: str, html_body: str) -> Dict[str, str]:
@@ -27,4 +29,10 @@ email_agent = Agent(
     instructions=INSTRUCTIONS,
     tools=[send_email],
     model=gemini_model,
+    input_guardrails=[
+        template_placeholder_agent,
+    ]
 )
+
+if __name__ == "__main__":
+    draw_graph(email_agent, "email_agent.png")

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from agents import Agent
 from agents import function_tool
 from model import gemini_model
-
+from input_guardrails import cyber_agent_input_guardrail
 
 INSTRUCTIONS = (
     "You are a senior researcher tasked with writing a cohesive report for a research query. "
@@ -30,4 +30,5 @@ writer_agent = Agent(
     instructions=INSTRUCTIONS,
     model=gemini_model,
     output_type=ReportData,
+    # input_guardrails=[cyber_agent_input_guardrail],
 )
