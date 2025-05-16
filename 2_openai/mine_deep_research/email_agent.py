@@ -4,9 +4,28 @@ from model import gemini_model
 from pydantic import BaseModel, Field
 import sendgrid
 from sendgrid.helpers.mail import Email, Mail, Content, To
-from agents import Agent, function_tool
+from agents import Agent, function_tool, output_guardrail, GuardrailFunctionOutput, RunContextWrapper
 from agents.extensions.visualization import draw_graph
-from input_guardrails import template_placeholder_agent
+import re
+
+class EmailOutput(BaseModel):
+    message: str = Field(description="The email message to be sent.")
+
+class PlaceHolderOutput(BaseModel):
+    message: str = Field(description="The email message to be sent.")
+    tripwire_triggered: bool = Field(description="Whether the tripwire was triggered.")
+    reasoning: str = Field(description="The reasoning for the tripwire.")
+
+@output_guardrail
+async def template_placeholder_guardrail(
+        ctx: RunContextWrapper,
+        agent: Agent,
+        output: EmailOutput,
+    ) -> GuardrailFunctionOutput:
+        return GuardrailFunctionOutput(
+            output_info="text",
+            tripwire_triggered=True,
+        )
 
 @function_tool
 def send_email(subject: str, html_body: str) -> Dict[str, str]:
@@ -25,13 +44,12 @@ You will be provided with a detailed report. You should use your tool to send on
 report converted into clean, well presented HTML with an appropriate subject line."""
 
 email_agent = Agent(
-    name="Email agent",
+    name="EmailAgent",
     instructions=INSTRUCTIONS,
     tools=[send_email],
-    model=gemini_model,
-    input_guardrails=[
-        template_placeholder_agent,
-    ]
+    # model=gemini_model,
+    output_type=EmailOutput,
+    output_guardrails=[template_placeholder_guardrail],
 )
 
 if __name__ == "__main__":

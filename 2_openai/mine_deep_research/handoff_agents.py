@@ -12,5 +12,4 @@ email_handoff_agent = handoff(
     tool_name_override="email_agent",
     tool_description_override="Send an email with a report.",
     input_type=ReportData,
-    
 )

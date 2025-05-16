@@ -92,7 +92,7 @@ class ResearchManager:
             output_type=ReportData,
             model_settings=ModelSettings(tool_choice="required", temperature=0.0),
             input_guardrails=[homework_guardrail],
-            # output_guardrails=[cyber_agent_output_guardrail],
+            output_guardrails=[cyber_agent_output_guardrail],
             # handoffs=[email_handoff_agent]
         )
 
