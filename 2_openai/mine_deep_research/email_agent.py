@@ -38,7 +38,7 @@ async def template_placeholder_guardrail(
         agent: Agent,
         output: EmailOutput,
     ) -> GuardrailFunctionOutput:
-        result = await Runner.run(template_placeholder_agent, output.response, context=ctx.context)
+        result = await Runner.run(template_placeholder_agent, output.message, context=ctx.context)
         return GuardrailFunctionOutput(
             output_info=PlaceHolderOutput.reasoning,
             tripwire_triggered=PlaceHolderOutput.tripwire_triggered,
