@@ -1,11 +1,23 @@
-from agents import Runner, trace, gen_trace_id, Agent, ItemHelpers
+from agents import (
+    Runner, 
+    trace, 
+    gen_trace_id, 
+    Agent, 
+    ItemHelpers,
+    input_guardrail,
+    RunContextWrapper,
+    GuardrailFunctionOutput,
+    InputGuardrailTripwireTriggered,
+    TResponseInputItem
+)
 from agents.model_settings import ModelSettings
 from writer_agent import writer_agent, ReportData
 from web_search_agent import web_search_agent
 from email_agent import email_agent
 from openai.types.responses import ResponseTextDeltaEvent
 from textwrap import dedent
-from model import gemini_model
+# from model import gemini_model
+from pydantic import BaseModel
 
 def create_prompts(tools: list):
     """ Create the prompts for the tools """
@@ -75,6 +87,7 @@ class ResearchManager:
             tools=tools,
             output_type=ReportData,
             model_settings=ModelSettings(tool_choice="required", temperature=0.0),
+            input_guardrails=[math_guardrail]
         )
 
     async def run(self, query: str):
@@ -84,33 +97,52 @@ class ResearchManager:
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
             yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
             print("Starting research...")
-            yield "Starting research..."
-            result = Runner.run_streamed(
-                self.agent,
-                f"Query: {query}",
-                max_turns = 40,
-            )
-            async for event in result.stream_events():
-                if event.type == "raw_response_event":
-                    continue
-                elif event.type == "agent_updated_stream_event":
-                    continue
-                elif event.type == "run_item_stream_event":
-                    if event.item.type == "tool_call_item":
-                        # print(f"Tool call: {event.item}")
-                        function_name = event.item.raw_item.name
-                        if function_name == "plan_searches":
-                            yield f"Planning searches..."
-                        elif function_name == "search":
-                            yield f"Searching for information..."
-                        elif function_name == "write_report":
-                            yield f"Writing report..."
-                    elif event.item.type == "tool_call_output_item":
-                        # print(f"Tool call output: {event.item.output}")
+            try:
+                yield "Starting research..."
+                result = Runner.run_streamed(
+                    self.agent,
+                    f"Query: {query}",
+                    max_turns = 40,
+                )
+                async for event in result.stream_events():
+                    if event.type == "raw_response_event":
                         continue
-                    elif event.item.type == "message_output_item":
-                        output = ItemHelpers.text_message_output(event.item)
-                        parse_output = ReportData.model_validate_json(output)
-                        yield f"Final output: {parse_output.markdown_report}"
-                    else:
-                        pass
+                    elif event.type == "agent_updated_stream_event":
+                        continue
+                    elif event.type == "run_item_stream_event":
+                        if event.item.type == "tool_call_item":
+                            # print(f"Tool call: {event.item}")
+                            function_name = event.item.raw_item.name
+                            if function_name == "plan_searches":
+                                yield f"Planning searches..."
+                            elif function_name == "search":
+                                yield f"Searching for information..."
+                            elif function_name == "write_report":
+                                yield f"Writing report..."
+                        elif event.item.type == "tool_call_output_item":
+                            # print(f"Tool call output: {event.item.output}")
+                            continue
+                        elif event.item.type == "message_output_item":
+                            output = ItemHelpers.text_message_output(event.item)
+                            parse_output = ReportData.model_validate_json(output)
+                            yield f"Final output: {parse_output.markdown_report}"
+                        else:
+                            pass
+            except InputGuardrailTripwireTriggered as e:
+                yield f"Guardrail tripwire triggered because: {e.guardrail_result.output.output_info.reasoning}"
+                return
+
+class MathHomeworkOutput(BaseModel):
+    is_math_homework: bool
+    reasoning: str
+
+guardrail_agent = Agent( 
+    name="Guardrail check",
+    instructions="Check if the user is asking you to do their math homework.",
+    output_type=MathHomeworkOutput,
+)
+
+@input_guardrail
+async def math_guardrail(ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]) -> GuardrailFunctionOutput:
+    result = await Runner.run(guardrail_agent, input, context=ctx.context)
+    return GuardrailFunctionOutput(output_info=result.final_output, tripwire_triggered=result.final_output.is_math_homework)
