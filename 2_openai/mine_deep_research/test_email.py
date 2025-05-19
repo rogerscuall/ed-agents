@@ -18,7 +18,7 @@ async def test_email_agent_handoff():
     )
 
     # Create a simple input
-    input_data = "Send a reminder of the meeting tomorrow at 10 AM to all team members."
+    input_data = "Send a reminder of the meeting tomorrow at 10 AM to all team members. Dont add any more information." 
 
     # Run the agent
     result = await Runner.run(simple_agent, input_data)
@@ -28,7 +28,7 @@ async def test_email_agent():
 
     simple_agent = email_agent
     # Create a simple input
-    input_data = "Send a reminder of the meeting tomorrow at 10 AM to all team members."
+    input_data = "Send a reminder of the meeting tomorrow at 10 AM to all team members. Include this text: [Your Name]"
 
     # Run the agent
     result = await Runner.run(simple_agent, input_data)
