@@ -40,8 +40,8 @@ async def template_placeholder_guardrail(
     ) -> GuardrailFunctionOutput:
         result = await Runner.run(template_placeholder_agent, output.message, context=ctx.context)
         return GuardrailFunctionOutput(
-            output_info=PlaceHolderOutput.reasoning,
-            tripwire_triggered=PlaceHolderOutput.tripwire_triggered,
+            output_info=result.final_output_as(PlaceHolderOutput).reasoning,
+            tripwire_triggered=result.final_output_as(PlaceHolderOutput).tripwire_triggered,
         )
 
 @function_tool
