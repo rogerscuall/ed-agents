@@ -4,7 +4,7 @@ from model import gemini_model
 from pydantic import BaseModel, Field
 import sendgrid
 from sendgrid.helpers.mail import Email, Mail, Content, To
-from agents import Agent, function_tool, output_guardrail, GuardrailFunctionOutput, RunContextWrapper, Runner
+from agents import Agent, function_tool, output_guardrail, GuardrailFunctionOutput, RunContextWrapper, Runner, OutputGuardrailTripwireTriggered
 from agents.extensions.visualization import draw_graph
 import re
 from textwrap import dedent
@@ -63,10 +63,32 @@ report converted into clean, well presented HTML with an appropriate subject lin
 email_agent = Agent(
     name="EmailAgent",
     instructions=INSTRUCTIONS,
-    tools=[send_email],
+    # tools=[send_email],
     # model=gemini_model,
     output_type=EmailOutput,
     output_guardrails=[template_placeholder_guardrail],
+)
+
+from writer_agent import ReportData
+
+@function_tool
+async def send_email_tool(report: ReportData):
+   try:
+    await Runner.run(email_agent, report.markdown_report)
+   except OutputGuardrailTripwireTriggered as e:
+    print(f"Guardrail tripwire triggered because: {e.guardrail_result.output.output_info.reasoning}")
+
+EXPERT_INSTRUCTIONS = """
+You can read a detailed report and send an email based on it.
+You will be provided with a detailed report.
+You should use your tool to send one email.
+"""
+
+email_expert = Agent(
+    name="EmailExpert",
+    instructions=INSTRUCTIONS,
+    tools=[send_email_tool],
+    model=gemini_model
 )
 
 if __name__ == "__main__":

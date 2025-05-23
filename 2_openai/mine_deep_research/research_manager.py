@@ -15,7 +15,7 @@ from agents import (
 from agents.model_settings import ModelSettings
 from writer_agent import writer_agent, ReportData
 from web_search_agent import web_search_agent
-from email_agent import email_agent
+from email_agent import email_expert
 from openai.types.responses import ResponseTextDeltaEvent
 from textwrap import dedent
 # from model import gemini_model
@@ -81,7 +81,7 @@ class ResearchManager:
         tools = [
             web_search_agent.as_tool(tool_name="web_search", tool_description="Perform a web search"),
             writer_agent.as_tool(tool_name="write_report", tool_description="Write a detailed report based on the search results"),
-            email_agent.as_tool(tool_name="send_email", tool_description="Send an email with the report"),
+            # email_agent.as_tool(tool_name="send_email", tool_description="Send an email with the report"),
         ]
         prompts = create_prompts(tools)
         self.agent = Agent(
@@ -93,7 +93,7 @@ class ResearchManager:
             model_settings=ModelSettings(tool_choice="required", temperature=0.0),
             input_guardrails=[homework_guardrail],
             output_guardrails=[cyber_agent_output_guardrail],
-            # handoffs=[email_handoff_agent]–
+            handoffs=[email_expert]
         )
 
     async def run(self, query: str):
